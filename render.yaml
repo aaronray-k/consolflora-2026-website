@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: consolflora-site
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: BOOKING_TO
+        value: info@consolflora.com
+      - key: MAIL_FROM
+        sync: false        # e.g. Consolflora Website <bookings@consolflora.com>
+      - key: RESEND_API_KEY
+        sync: false        # set in the Render dashboard, never in the repo

@@ -1,0 +1,10 @@
+{
+  "name": "consolflora-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Consolflora Ltd website with appointment booking that emails the team",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" },
+  "dependencies": { "nodemailer": "^6.9.14" }
+}
