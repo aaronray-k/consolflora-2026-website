@@ -6,7 +6,18 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
-const PUBLIC = path.join(__dirname, 'public');
+const ROOT = __dirname;
+// Works whether the files sit in /public (as in the zip) or flat at the top of the repository.
+const CANDIDATES = [path.join(ROOT, 'public'), ROOT];
+function findAsset(name, sub) {
+  for (const base of CANDIDATES) {
+    for (const p of sub ? [path.join(base, sub, name), path.join(base, name)] : [path.join(base, name)]) {
+      if (fs.existsSync(p) && fs.statSync(p).isFile()) return p;
+    }
+  }
+  return null;
+}
+const RESOURCES = new Set(['consolflora-logo-dark.png', 'consolflora-logo-light.png', 'favicon.png']);
 const TO = process.env.BOOKING_TO || 'info@consolflora.com';
 const FROM = process.env.MAIL_FROM || 'Consolflora Website <bookings@consolflora.com>';
 const DRY_RUN = process.env.DRY_RUN === 'true';
@@ -113,10 +124,14 @@ http.createServer((req, res) => {
     return json(res, 405, { ok: false });
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
-  let rel = decodeURIComponent(url.pathname);
-  if (rel === '/' || rel === '/appointment') rel = '/index.html';
-  const file = path.normalize(path.join(PUBLIC, rel));
-  if (!file.startsWith(PUBLIC)) { res.writeHead(403); return res.end(); }
+  let file = null;
+  const rel = decodeURIComponent(url.pathname);
+  if (rel === '/' || rel === '/index.html' || rel === '/appointment') file = findAsset('index.html');
+  else {
+    const m = /^\/resources\/([\w.-]+)$/.exec(rel);
+    if (m && RESOURCES.has(m[1])) file = findAsset(m[1], 'resources');
+  }
+  if (!file) { res.writeHead(404, HEADERS); return res.end('Not found'); }
   fs.readFile(file, (err, buf) => {
     if (err) { res.writeHead(404, HEADERS); return res.end('Not found'); }
     const ext = path.extname(file).toLowerCase();
