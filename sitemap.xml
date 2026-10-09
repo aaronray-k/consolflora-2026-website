@@ -1,8 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://consolflora.com/</loc><lastmod>2026-10-06</lastmod></url>
-  <url><loc>https://consolflora.com/privacy</loc><lastmod>2026-10-06</lastmod></url>
-  <url><loc>https://consolflora.com/terms</loc><lastmod>2026-10-06</lastmod></url>
-  <url><loc>https://consolflora.com/cookies</loc><lastmod>2026-10-06</lastmod></url>
-  <url><loc>https://consolflora.com/accessibility</loc><lastmod>2026-10-06</lastmod></url>
+  <url><loc>https://consolflora.com/</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/shop</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/privacy</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/nl/privacy</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/fr/privacy</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/de/privacy</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/es/privacy</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/terms</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/nl/terms</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/fr/terms</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/de/terms</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/es/terms</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/cookies</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/nl/cookies</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/fr/cookies</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/de/cookies</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/es/cookies</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/accessibility</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/nl/accessibility</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/fr/accessibility</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/de/accessibility</loc><lastmod>2026-10-09</lastmod></url>
+  <url><loc>https://consolflora.com/es/accessibility</loc><lastmod>2026-10-09</lastmod></url>
 </urlset>

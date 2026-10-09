@@ -1,0 +1,179 @@
+{
+ "_help": "Edit this file to change the shop. Each product needs id, type (must match a type id), name, description, image (path under /catalogue/), imageAlt. Optional per product: colour, stemLengths (list of cm), attributes (label/value pairs), price {amount, unit}, available (false hides it). Text can be a plain string or an object with en, nl, fr, de, es. Leave price out to show 'Price on request'. Set settings.accountUrl and settings.signInUrl to your ordering platform once they exist.",
+ "settings": {
+  "platformName": "Mrpetals",
+  "accountUrl": "",
+  "signInUrl": "",
+  "currency": "USD",
+  "stemRange": [
+   40,
+   120
+  ]
+ },
+ "types": [
+  {
+   "id": "roses",
+   "name": {
+    "en": "Roses",
+    "nl": "Rozen",
+    "fr": "Roses",
+    "de": "Rosen",
+    "es": "Rosas"
+   }
+  },
+  {
+   "id": "spray-roses",
+   "name": {
+    "en": "Spray roses",
+    "nl": "Trosrozen",
+    "fr": "Roses spray",
+    "de": "Sprayrosen",
+    "es": "Rosas spray"
+   }
+  },
+  {
+   "id": "summer-flowers",
+   "name": {
+    "en": "Summer flowers",
+    "nl": "Zomerbloemen",
+    "fr": "Fleurs d’été",
+    "de": "Sommerblumen",
+    "es": "Flores de verano"
+   }
+  }
+ ],
+ "products": [
+  {
+   "id": "roses",
+   "type": "roses",
+   "name": {
+    "en": "Roses",
+    "nl": "Rozen",
+    "fr": "Roses",
+    "de": "Rosen",
+    "es": "Rosas"
+   },
+   "description": {
+    "en": "High quality cut roses grown with precision and care. Consistent stem length, vivid colour and long vase life make them a dependable choice.",
+    "nl": "Snijrozen van hoge kwaliteit, geteeld met precisie en zorg. Een constante steellengte, levendige kleur en een lange houdbaarheid in de vaas maken ze een betrouwbare keuze.",
+    "fr": "Des roses coupées de haute qualité, cultivées avec précision et soin. Longueur de tige régulière, couleurs éclatantes et longue tenue en vase en font un choix fiable.",
+    "de": "Hochwertige Schnittrosen, mit Präzision und Sorgfalt angebaut. Gleichmäßige Stiellänge, leuchtende Farben und lange Haltbarkeit in der Vase machen sie zu einer verlässlichen Wahl.",
+    "es": "Rosas cortadas de alta calidad, cultivadas con precisión y cuidado. Una longitud de tallo uniforme, un color vivo y una larga duración en el jarrón las convierten en una opción fiable."
+   },
+   "image": "/catalogue/rose.webp",
+   "imageAlt": {
+    "en": "A red rose in full bloom",
+    "nl": "Een rode roos in volle bloei",
+    "fr": "Une rose rouge en pleine floraison",
+    "de": "Eine rote Rose in voller Blüte",
+    "es": "Una rosa roja en plena floración"
+   },
+   "attributes": [
+    {
+     "label": {
+      "en": "Typical uses",
+      "nl": "Typische toepassingen",
+      "fr": "Utilisations courantes",
+      "de": "Typische Verwendungen",
+      "es": "Usos habituales"
+     },
+     "value": {
+      "en": "Florists, Events, Bulk buyers",
+      "nl": "Bloemisten, Evenementen, Grootafnemers",
+      "fr": "Fleuristes, Événements, Acheteurs en gros",
+      "de": "Floristen, Events, Großabnehmer",
+      "es": "Floristas, Eventos, Compradores al por mayor"
+     }
+    }
+   ]
+  },
+  {
+   "id": "spray-roses",
+   "type": "spray-roses",
+   "name": {
+    "en": "Spray roses",
+    "nl": "Trosrozen",
+    "fr": "Roses spray",
+    "de": "Sprayrosen",
+    "es": "Rosas spray"
+   },
+   "description": {
+    "en": "Elegant spray roses carry several flower heads on each stem. They add volume and texture to bouquets, arrangements and decorative designs.",
+    "nl": "Elegante trosrozen dragen meerdere bloemhoofden aan elke steel. Ze geven volume en textuur aan boeketten, arrangementen en decoratieve ontwerpen.",
+    "fr": "Les roses spray portent plusieurs têtes florales sur chaque tige. Elles apportent volume et texture aux bouquets, compositions et créations décoratives.",
+    "de": "Sprayrosen tragen mehrere Blütenköpfe an jedem Stiel. Sie verleihen Sträußen, Arrangements und dekorativen Gestaltungen Volumen und Textur.",
+    "es": "Las rosas spray llevan varias cabezas florales en cada tallo. Aportan volumen y textura a ramos, arreglos y diseños decorativos."
+   },
+   "image": "/catalogue/spray.webp",
+   "imageAlt": {
+    "en": "Pink spray roses with several flower heads on one stem",
+    "nl": "Roze trosrozen met meerdere bloemhoofden aan één steel",
+    "fr": "Roses spray de couleur rose, avec plusieurs têtes florales sur une même tige",
+    "de": "Rosa Sprayrosen mit mehreren Blütenköpfen an einem Stiel",
+    "es": "Rosas spray rosadas con varias cabezas florales en un mismo tallo"
+   },
+   "attributes": [
+    {
+     "label": {
+      "en": "Typical uses",
+      "nl": "Typische toepassingen",
+      "fr": "Utilisations courantes",
+      "de": "Typische Verwendungen",
+      "es": "Usos habituales"
+     },
+     "value": {
+      "en": "Bouquets, Arrangements, Decorative design",
+      "nl": "Boeketten, Arrangementen, Decoratief ontwerp",
+      "fr": "Bouquets, Compositions, Création décorative",
+      "de": "Sträuße, Arrangements, Dekorative Gestaltung",
+      "es": "Ramos, Arreglos, Diseño decorativo"
+     }
+    }
+   ]
+  },
+  {
+   "id": "summer-flowers",
+   "type": "summer-flowers",
+   "name": {
+    "en": "Summer flowers",
+    "nl": "Zomerbloemen",
+    "fr": "Fleurs d’été",
+    "de": "Sommerblumen",
+    "es": "Flores de verano"
+   },
+   "description": {
+    "en": "A seasonal selection grown for freshness, colour variety and durability. Well suited to mixed bouquets, retail displays and special occasions.",
+    "nl": "Een seizoensselectie, geteeld voor versheid, kleurvariatie en duurzaamheid. Zeer geschikt voor gemengde boeketten, winkelpresentaties en bijzondere gelegenheden.",
+    "fr": "Une sélection de saison, cultivée pour sa fraîcheur, sa variété de couleurs et sa durabilité. Idéale pour les bouquets mélangés, les présentations en magasin et les occasions spéciales.",
+    "de": "Eine saisonale Auswahl, angebaut für Frische, Farbvielfalt und Haltbarkeit. Bestens geeignet für gemischte Sträuße, Verkaufsdisplays und besondere Anlässe.",
+    "es": "Una selección de temporada, cultivada por su frescura, variedad de colores y durabilidad. Ideal para ramos mixtos, exhibiciones en tiendas y ocasiones especiales."
+   },
+   "image": "/catalogue/summer.webp",
+   "imageAlt": {
+    "en": "A sunflower catching the evening light",
+    "nl": "Een zonnebloem in het avondlicht",
+    "fr": "Un tournesol dans la lumière du soir",
+    "de": "Eine Sonnenblume im Abendlicht",
+    "es": "Un girasol bajo la luz del atardecer"
+   },
+   "attributes": [
+    {
+     "label": {
+      "en": "Typical uses",
+      "nl": "Typische toepassingen",
+      "fr": "Utilisations courantes",
+      "de": "Typische Verwendungen",
+      "es": "Usos habituales"
+     },
+     "value": {
+      "en": "Mixed bouquets, Retail displays, Special occasions",
+      "nl": "Gemengde boeketten, Winkelpresentaties, Bijzondere gelegenheden",
+      "fr": "Bouquets mélangés, Présentations en magasin, Occasions spéciales",
+      "de": "Gemischte Sträuße, Verkaufsdisplays, Besondere Anlässe",
+      "es": "Ramos mixtos, Exhibiciones en tiendas, Ocasiones especiales"
+     }
+    }
+   ]
+  }
+ ]
+}

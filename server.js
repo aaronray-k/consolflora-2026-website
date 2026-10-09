@@ -22,12 +22,19 @@ const TO = process.env.BOOKING_TO || 'info@consolflora.com';
 const FROM = process.env.MAIL_FROM || 'Consolflora Website <bookings@consolflora.com>';
 const DRY_RUN = process.env.DRY_RUN === 'true';
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain', '.xml': 'application/xml' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.avif': 'image/avif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain', '.xml': 'application/xml' };
+// Optional extra image hosts for a live catalogue feed, e.g. CATALOGUE_IMG_HOSTS="https://abc.supabase.co"
+const IMG_HOSTS = (process.env.CATALOGUE_IMG_HOSTS || '').split(/\s+/).filter(h => /^https:\/\/[\w.*-]+(:\d+)?$/.test(h)).join(' ');
 const HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'"
+  'Strict-Transport-Security': 'max-age=15552000',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: " + IMG_HOSTS + "; connect-src 'self'; form-action 'self'; base-uri 'self'; frame-ancestors 'none'"
 };
+const PAGES = { '/': 'index.html', '/index.html': 'index.html', '/privacy': 'privacy.html', '/terms': 'terms.html', '/cookies': 'cookies.html', '/accessibility': 'accessibility.html', '/robots.txt': 'robots.txt', '/sitemap.xml': 'sitemap.xml', '/google5ab3099eccd9ace5.html': 'google5ab3099eccd9ace5.html', '/shop': 'shop.html' };
+// Translated legal pages: /nl/privacy -> privacy-nl.html (flat files, so GitHub web upload works)
+['nl', 'fr', 'de', 'es'].forEach(l => ['privacy', 'terms', 'cookies', 'accessibility'].forEach(p => { PAGES['/' + l + '/' + p] = p + '-' + l + '.html'; }));
 
 // Simple per-IP limit: 5 requests per hour
 const hits = new Map();
@@ -45,8 +52,9 @@ function validate(b) {
   const d = {
     name: clean(b.name, 120), email: clean(b.email, 160), phone: clean(b.phone, 40), company: clean(b.company, 140),
     role: clean(b.role, 20), service: clean(b.service, 60), date: clean(b.date, 10), time: clean(b.time, 20),
-    how: clean(b.how, 30), message: clean(b.message, 2000)
+    how: clean(b.how, 30), message: clean(b.message, 2000), consent: b.consent === 'yes'
   };
+  if (!d.consent) return { error: 'Consent is required' };
   if (!d.name) return { error: 'Name is required' };
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return { error: 'A valid email is required' };
   if (!['Buyer', 'Grower', 'Other'].includes(d.role)) return { error: 'Role is required' };
@@ -57,7 +65,7 @@ function validate(b) {
 
 function compose(d) {
   const rows = [['Name', d.name], ['Email', d.email], ['Phone', d.phone], ['Company', d.company], ['I am a', d.role],
-    ['Service', d.service], ['Preferred date', d.date], ['Preferred time (Nairobi)', d.time], ['Meeting by', d.how]];
+    ['Service', d.service], ['Preferred date', d.date], ['Preferred time (Nairobi)', d.time], ['Meeting by', d.how], ['Agreed to Privacy Policy', 'Yes']];
   const text = rows.map(r => `${r[0]}: ${r[1] || '-'}`).join('\n') + `\n\nMessage:\n${d.message || '-'}\n`;
   const htmlBody = `<div style="font-family:Arial,sans-serif;color:#10200f"><h2 style="color:#002903;margin:0 0 12px">New appointment request</h2>` +
     `<table cellpadding="6" style="border-collapse:collapse">${rows.map(r => `<tr><td style="color:#555">${esc(r[0])}</td><td><b>${esc(r[1] || '-')}</b></td></tr>`).join('')}</table>` +
@@ -116,6 +124,41 @@ function handleBooking(req, res) {
   });
 }
 
+// ---- Catalogue feed -------------------------------------------------------
+// Serves /catalogue.json. By default it reads catalogue.json from the repository.
+// If CATALOGUE_URL is set (for example a Mrpetals export), the shop pulls that live,
+// caches it for 5 minutes, and falls back to the local file if the feed is down.
+const CATALOGUE_URL = process.env.CATALOGUE_URL || '';
+let remoteCache = { at: 0, body: null };
+function localCatalogue() {
+  const f = findAsset('catalogue.json');
+  if (!f) return null;
+  try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { console.error('catalogue.json invalid:', e.message); return null; }
+}
+async function catalogueBody() {
+  const local = localCatalogue();
+  if (CATALOGUE_URL) {
+    if (remoteCache.body && Date.now() - remoteCache.at < 300000) return remoteCache.body;
+    try {
+      const r = await fetch(CATALOGUE_URL, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(5000) });
+      if (!r.ok) throw new Error('status ' + r.status);
+      const j = JSON.parse(await r.text());
+      if (!j || !Array.isArray(j.products)) throw new Error('feed has no products array');
+      const base = local || {};
+      const merged = Object.assign({}, base, j, { settings: Object.assign({}, base.settings, j.settings) });
+      delete merged._help;
+      remoteCache = { at: Date.now(), body: JSON.stringify(merged) };
+      return remoteCache.body;
+    } catch (e) {
+      console.error('catalogue feed failed:', e.message);
+      if (remoteCache.body) return remoteCache.body;
+    }
+  }
+  if (!local) return null;
+  delete local._help;
+  return JSON.stringify(local);
+}
+
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/healthz') { res.writeHead(200); return res.end('ok'); }
@@ -124,12 +167,24 @@ http.createServer((req, res) => {
     return json(res, 405, { ok: false });
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
+  if (url.pathname === '/catalogue.json') {
+    catalogueBody().then(body => {
+      if (!body) { res.writeHead(404, HEADERS); return res.end('Not found'); }
+      res.writeHead(200, Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=60' }, HEADERS));
+      res.end(req.method === 'HEAD' ? undefined : body);
+    }).catch(() => { res.writeHead(502, HEADERS); res.end('Unavailable'); });
+    return;
+  }
   let file = null;
   const rel = decodeURIComponent(url.pathname);
-  if (rel === '/' || rel === '/index.html' || rel === '/appointment') file = findAsset('index.html');
+  const key = rel.length > 1 ? rel.replace(/\/$/, '').replace(/\.html$/, '') : rel;
+  if (PAGES[rel] || PAGES[key]) file = findAsset(PAGES[rel] || PAGES[key]);
+  else if (rel === '/appointment') file = findAsset('index.html');
   else {
     const m = /^\/resources\/([\w.-]+)$/.exec(rel);
     if (m && RESOURCES.has(m[1])) file = findAsset(m[1], 'resources');
+    const c = /^\/catalogue\/([\w-]+\.(?:webp|jpe?g|png|avif))$/i.exec(rel);
+    if (!file && c) file = findAsset(c[1], 'catalogue');
   }
   if (!file) { res.writeHead(404, HEADERS); return res.end('Not found'); }
   fs.readFile(file, (err, buf) => {
