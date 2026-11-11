@@ -17,12 +17,12 @@ function findAsset(name, sub) {
   }
   return null;
 }
-const RESOURCES = new Set(['consolflora-logo-dark.png', 'consolflora-logo-light.png', 'favicon.png']);
+const RESOURCES = new Set(['consolflora-logo-dark.png', 'consolflora-logo-light.png', 'favicon.png', 'rose-mark.png']);
 const TO = process.env.BOOKING_TO || 'info@consolflora.com';
 const FROM = process.env.MAIL_FROM || 'Consolflora Website <bookings@consolflora.com>';
 const DRY_RUN = process.env.DRY_RUN === 'true';
 
-const MIME = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.avif': 'image/avif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain', '.xml': 'application/xml' };
+const MIME = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.webp': 'image/webp', '.avif': 'image/avif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.json': 'application/json', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.txt': 'text/plain', '.xml': 'application/xml', '.webmanifest': 'application/manifest+json' };
 // Optional extra image hosts for a live catalogue feed, e.g. CATALOGUE_IMG_HOSTS="https://abc.supabase.co"
 const IMG_HOSTS = (process.env.CATALOGUE_IMG_HOSTS || '').split(/\s+/).filter(h => /^https:\/\/[\w.*-]+(:\d+)?$/.test(h)).join(' ');
 const HEADERS = {
@@ -32,7 +32,7 @@ const HEADERS = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: " + IMG_HOSTS + "; connect-src 'self'; form-action 'self'; base-uri 'self'; frame-ancestors 'none'"
 };
-const PAGES = { '/': 'index.html', '/index.html': 'index.html', '/privacy': 'privacy.html', '/terms': 'terms.html', '/cookies': 'cookies.html', '/accessibility': 'accessibility.html', '/robots.txt': 'robots.txt', '/sitemap.xml': 'sitemap.xml', '/google5ab3099eccd9ace5.html': 'google5ab3099eccd9ace5.html', '/shop': 'shop.html' };
+const PAGES = { '/': 'index.html', '/index.html': 'index.html', '/privacy': 'privacy.html', '/terms': 'terms.html', '/cookies': 'cookies.html', '/accessibility': 'accessibility.html', '/robots.txt': 'robots.txt', '/sitemap.xml': 'sitemap.xml', '/google5ab3099eccd9ace5.html': 'google5ab3099eccd9ace5.html', '/shop': 'shop.html', '/thank-you': 'thank-you.html', '/favicon.ico': 'favicon.ico', '/favicon-32.png': 'favicon-32.png', '/apple-touch-icon.png': 'apple-touch-icon.png', '/icon-192.png': 'icon-192.png', '/icon-512.png': 'icon-512.png', '/og-image.png': 'og-image.png', '/site.webmanifest': 'site.webmanifest' };
 // Translated legal pages: /nl/privacy -> privacy-nl.html (flat files, so GitHub web upload works)
 ['nl', 'fr', 'de', 'es'].forEach(l => ['privacy', 'terms', 'cookies', 'accessibility'].forEach(p => { PAGES['/' + l + '/' + p] = p + '-' + l + '.html'; }));
 
@@ -159,6 +159,42 @@ async function catalogueBody() {
   return JSON.stringify(local);
 }
 
+// ---- Privacy-friendly analytics --------------------------------------------
+// Counts page views per day and path. No cookies, no IP address, no user agent, no
+// visitor ID is stored. Counters live in memory (reset on restart) and each hit is
+// also written to the server log as a plain line. View totals at /api/stats?token=...
+// where the token is the STATS_TOKEN environment variable (the route is off if unset).
+const stats = { since: new Date().toISOString(), days: {}, referrers: {} };
+const TRACKABLE = new Set(Object.keys(PAGES).filter(p => !/\.(html|txt|xml|ico|png|webmanifest)$/.test(p) && p !== '/thank-you'));
+function handleHit(req, res) {
+  let size = 0; const chunks = [];
+  req.on('data', c => { size += c.length; if (size > 1000) req.destroy(); else chunks.push(c); });
+  req.on('end', () => {
+    try {
+      const b = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+      const p = String(b.p || '/').replace(/\/$/, '') || '/';
+      if (!TRACKABLE.has(p) && p !== '/thank-you') { res.writeHead(204, HEADERS); return res.end(); }
+      const day = new Date().toISOString().slice(0, 10);
+      const d = stats.days[day] || (stats.days[day] = {});
+      d[p] = (d[p] || 0) + 1;
+      let ref = '';
+      try { ref = new URL(String(b.r || '')).hostname.replace(/^www\./, '').slice(0, 80); } catch (e) {}
+      if (ref && ref !== 'consolflora.com') stats.referrers[ref] = (stats.referrers[ref] || 0) + 1;
+      console.log('[view] ' + p + (ref ? ' from ' + ref : ''));
+    } catch (e) {}
+    res.writeHead(204, HEADERS); res.end();
+  });
+}
+
+function notFound(res) {
+  const f = findAsset('404.html');
+  if (!f) { res.writeHead(404, HEADERS); return res.end('Not found'); }
+  fs.readFile(f, (err, buf) => {
+    res.writeHead(404, Object.assign({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' }, HEADERS));
+    res.end(err ? 'Not found' : buf);
+  });
+}
+
 http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/healthz') { res.writeHead(200); return res.end('ok'); }
@@ -166,10 +202,18 @@ http.createServer((req, res) => {
     if (req.method === 'POST') return handleBooking(req, res);
     return json(res, 405, { ok: false });
   }
+  if (url.pathname === '/api/hit') {
+    if (req.method === 'POST') return handleHit(req, res);
+    res.writeHead(405, HEADERS); return res.end();
+  }
+  if (url.pathname === '/api/stats' && process.env.STATS_TOKEN) {
+    if (url.searchParams.get('token') !== process.env.STATS_TOKEN) { res.writeHead(401, HEADERS); return res.end('Unauthorized'); }
+    return json(res, 200, stats);
+  }
   if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
   if (url.pathname === '/catalogue.json') {
     catalogueBody().then(body => {
-      if (!body) { res.writeHead(404, HEADERS); return res.end('Not found'); }
+      if (!body) return notFound(res);
       res.writeHead(200, Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=60' }, HEADERS));
       res.end(req.method === 'HEAD' ? undefined : body);
     }).catch(() => { res.writeHead(502, HEADERS); res.end('Unavailable'); });
@@ -186,11 +230,11 @@ http.createServer((req, res) => {
     const c = /^\/catalogue\/([\w-]+\.(?:webp|jpe?g|png|avif))$/i.exec(rel);
     if (!file && c) file = findAsset(c[1], 'catalogue');
   }
-  if (!file) { res.writeHead(404, HEADERS); return res.end('Not found'); }
+  if (!file) return notFound(res);
   fs.readFile(file, (err, buf) => {
-    if (err) { res.writeHead(404, HEADERS); return res.end('Not found'); }
+    if (err) return notFound(res);
     const ext = path.extname(file).toLowerCase();
-    res.writeHead(200, Object.assign({ 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=86400' }, HEADERS));
+    res.writeHead(200, Object.assign({ 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': (ext === '.html' || ext === '.webmanifest') ? 'no-cache' : 'public, max-age=86400' }, HEADERS));
     res.end(buf);
   });
 }).listen(PORT, () => console.log('Consolflora site on :' + PORT));
